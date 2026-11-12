@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="ITSTEPGram/ITSTEPGram.csproj" />
+  <Project Path="Messenger_db/Messenger_db.csproj" Id="61450eef-f5a8-4589-8e1d-5fedbb6b5c68" />
 </Solution>
