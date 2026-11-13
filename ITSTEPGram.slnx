@@ -1,4 +1,8 @@
 <Solution>
+  <Project Path="ITSTEPGram.Client/ITSTEPGram.Client.csproj" Id="516c9e5d-7f9f-47fe-9da1-89132a19360e" />
+  <Project Path="ITSTEPGram.Common/ITSTEPGram.Common.csproj" Id="68efbc5e-bd46-4351-8063-7f180910d514" />
+  <Project Path="ITSTEPGram.ConsoleClient/ITSTEPGram.ConsoleClient.csproj" Id="e23d00bb-3093-4c0c-8a2b-41c417ca76b2" />
+  <Project Path="ITSTEPGram.Server/ITSTEPGram.Server.csproj" Id="49405433-37bb-4370-8a7b-58b5650f7946" />
   <Project Path="ITSTEPGram/ITSTEPGram.csproj" />
   <Project Path="Messenger_db/Messenger_db.csproj" Id="61450eef-f5a8-4589-8e1d-5fedbb6b5c68" />
 </Solution>
