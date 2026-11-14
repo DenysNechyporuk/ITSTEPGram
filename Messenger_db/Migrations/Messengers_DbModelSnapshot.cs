@@ -156,6 +156,89 @@ namespace Messenger_db.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("Messenger_db.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsOnline")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Messenger_db.UserContact", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ContactUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactUserId");
+
+                    b.HasIndex("UserId", "ContactUserId")
+                        .IsUnique();
+
+                    b.ToTable("UserContacts");
+                });
+
             modelBuilder.Entity("Messenger_db.ChatMember", b =>
                 {
                     b.HasOne("Messenger_db.Chat", "Chats")
@@ -203,6 +286,25 @@ namespace Messenger_db.Migrations
                     b.Navigation("Clients");
                 });
 
+            modelBuilder.Entity("Messenger_db.UserContact", b =>
+                {
+                    b.HasOne("Messenger_db.User", "ContactUser")
+                        .WithMany("AddedByContacts")
+                        .HasForeignKey("ContactUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Messenger_db.User", "User")
+                        .WithMany("Contacts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ContactUser");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Messenger_db.Chat", b =>
                 {
                     b.Navigation("ChatMembers");
@@ -217,6 +319,13 @@ namespace Messenger_db.Migrations
                     b.Navigation("Contacts");
 
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Messenger_db.User", b =>
+                {
+                    b.Navigation("AddedByContacts");
+
+                    b.Navigation("Contacts");
                 });
 #pragma warning restore 612, 618
         }

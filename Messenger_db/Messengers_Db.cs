@@ -73,12 +73,66 @@ namespace Messenger_db
                 .WithMany(m => m.Messages)
                 .HasForeignKey(x => x.ChatId);
 
+            modelBuilder.Entity<User>()
+                .Property(u => u.Username)
+                .IsRequired(true)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.DisplayName)
+                .IsRequired(true)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Email)
+                .IsRequired(true)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Password)
+                .IsRequired(true)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.AvatarUrl)
+                .HasMaxLength(500);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Bio)
+                .HasMaxLength(500);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<UserContact>()
+                .HasOne(c => c.User)
+                .WithMany(u => u.Contacts)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserContact>()
+                .HasOne(c => c.ContactUser)
+                .WithMany(u => u.AddedByContacts)
+                .HasForeignKey(c => c.ContactUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserContact>()
+                .HasIndex(c => new { c.UserId, c.ContactUserId })
+                .IsUnique();
+
         }
         public DbSet<Client> Clients { get; set; }
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Chat> Chats { get; set; }
         public DbSet<ChatMember> ChatMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserContact> UserContacts { get; set; }
 
     }
 
