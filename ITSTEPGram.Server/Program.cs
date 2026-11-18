@@ -43,9 +43,18 @@ class Member
     }
 }
 
+class ChatRoom
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public List<Member> Members { get; } = new List<Member>();
+}
+
 class Chat
 {
     List<Member> members = new List<Member>();
+    Dictionary<int, ChatRoom> rooms = new Dictionary<int, ChatRoom>();
+    int nextChatId = 1;
 
     public void ServeClient(TcpClient client)
     {
@@ -58,9 +67,24 @@ class Chat
                 return;
 
             member.Name = string.IsNullOrWhiteSpace(first.Sender) ? "Guest" : first.Sender;
+            bool isNameTaken = false;
             lock (members)
             {
-                members.Add(member);
+                foreach (var m in members)
+                {
+                    if (m.Name == member.Name)
+                        isNameTaken = true;
+                }
+                if (!isNameTaken)
+                    members.Add(member);
+            }
+            if (isNameTaken)
+            {
+                lock (members)
+                {
+                    Send(member, ServerMessage($"Ім'я {member.Name} вже зайняте"));
+                }
+                return;
             }
             isJoined = true;
             Console.WriteLine($"\t {member.Name} joined");
@@ -80,7 +104,23 @@ class Chat
                         break;
                     case RequestCommand.Message:
                         command.Sender = member.Name;
+                        command.ChatId = ClientCommand.GeneralChatId;
                         Broadcast(command);
+                        break;
+                    case RequestCommand.PrivateMessage:
+                        SendPrivate(member, command);
+                        break;
+                    case RequestCommand.ChatMessage:
+                        SendToChat(member, command);
+                        break;
+                    case RequestCommand.CreateChat:
+                        CreateChat(member, command);
+                        break;
+                    case RequestCommand.JoinChat:
+                        JoinChat(member, command);
+                        break;
+                    case RequestCommand.LeaveChat:
+                        LeaveChat(member, command);
                         break;
                     default:
                         break;
@@ -96,6 +136,10 @@ class Chat
             lock (members)
             {
                 members.Remove(member);
+                foreach (var pair in rooms)
+                {
+                    pair.Value.Members.Remove(member);
+                }
             }
             member.Client.Close();
 
@@ -115,23 +159,141 @@ class Chat
         return JsonSerializer.Deserialize<ClientCommand>(line);
     }
 
+    private ClientCommand ServerMessage(string text)
+    {
+        return new ClientCommand(text) { Sender = "Server" };
+    }
+
+    private void Send(Member member, ClientCommand command)
+    {
+        try
+        {
+            member.Writer.WriteLine(JsonSerializer.Serialize<ClientCommand>(command));
+            member.Writer.Flush();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"\t Cannot send to {member.Name}: {ex.Message}");
+        }
+    }
+
+    // Усі до всіх
     private void Broadcast(ClientCommand command)
     {
-        string json = JsonSerializer.Serialize<ClientCommand>(command);
         lock (members)
         {
             foreach (var member in members)
             {
-                try
-                {
-                    member.Writer.WriteLine(json);
-                    member.Writer.Flush();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"\t Cannot send to {member.Name}: {ex.Message}");
-                }
+                Send(member, command);
             }
+        }
+    }
+
+    // Один до одного
+    private void SendPrivate(Member sender, ClientCommand command)
+    {
+        command.Sender = sender.Name;
+        lock (members)
+        {
+            Member? receiver = null;
+            foreach (var m in members)
+            {
+                if (m.Name == command.Receiver)
+                    receiver = m;
+            }
+            if (receiver == null)
+            {
+                Send(sender, ServerMessage($"Користувача {command.Receiver} не знайдено"));
+                return;
+            }
+            Send(receiver, command);
+            if (receiver != sender)
+                Send(sender, command);
+        }
+    }
+
+    // Один до багатьох
+    private void SendToChat(Member sender, ClientCommand command)
+    {
+        command.Sender = sender.Name;
+        lock (members)
+        {
+            if (!rooms.TryGetValue(command.ChatId, out ChatRoom? room))
+            {
+                Send(sender, ServerMessage($"Чату {command.ChatId} не існує"));
+                return;
+            }
+            if (!room.Members.Contains(sender))
+            {
+                Send(sender, ServerMessage($"Ви не є учасником чату {command.ChatId}"));
+                return;
+            }
+            foreach (var m in room.Members)
+            {
+                Send(m, command);
+            }
+        }
+    }
+
+    private void CreateChat(Member creator, ClientCommand command)
+    {
+        lock (members)
+        {
+            ChatRoom room = new ChatRoom();
+            room.Id = nextChatId;
+            nextChatId++;
+            room.Name = string.IsNullOrWhiteSpace(command.Message) ? $"Chat {room.Id}" : command.Message;
+            room.Members.Add(creator);
+            rooms.Add(room.Id, room);
+            Console.WriteLine($"\t {creator.Name} created chat {room.Id} '{room.Name}'");
+            Send(creator, ServerMessage($"Чат '{room.Name}' створено, ChatId = {room.Id}"));
+        }
+    }
+
+    private void JoinChat(Member member, ClientCommand command)
+    {
+        lock (members)
+        {
+            if (!rooms.TryGetValue(command.ChatId, out ChatRoom? room))
+            {
+                Send(member, ServerMessage($"Чату {command.ChatId} не існує"));
+                return;
+            }
+            if (room.Members.Contains(member))
+            {
+                Send(member, ServerMessage($"Ви вже в чаті {room.Id}"));
+                return;
+            }
+            room.Members.Add(member);
+            NotifyChat(room, $"{member.Name} приєднався до чату '{room.Name}'");
+        }
+    }
+
+    private void LeaveChat(Member member, ClientCommand command)
+    {
+        lock (members)
+        {
+            if (!rooms.TryGetValue(command.ChatId, out ChatRoom? room) || !room.Members.Contains(member))
+            {
+                Send(member, ServerMessage($"Ви не є учасником чату {command.ChatId}"));
+                return;
+            }
+            room.Members.Remove(member);
+            Send(member, ServerMessage($"Ви вийшли з чату '{room.Name}'"));
+            NotifyChat(room, $"{member.Name} залишив чат '{room.Name}'");
+        }
+    }
+
+    private void NotifyChat(ChatRoom room, string text)
+    {
+        ClientCommand notice = new ClientCommand(text, RequestCommand.ChatMessage)
+        {
+            Sender = "Server",
+            ChatId = room.Id
+        };
+        foreach (var m in room.Members)
+        {
+            Send(m, notice);
         }
     }
 }
