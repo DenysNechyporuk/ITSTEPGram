@@ -1,0 +1,34 @@
+﻿<Window x:Class="ITSTEPGram.RegisterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ITSTEPGram — Реєстрація" Height="650" Width="420"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{StaticResource WindowBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI" FontSize="14">
+    <Grid>
+        <StackPanel VerticalAlignment="Center" Margin="44,0">
+            <TextBlock Text="Реєстрація" Style="{StaticResource TitleText}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Створіть новий акаунт" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" Margin="0,4,0,8"/>
+
+            <TextBlock Text="Ім'я" Style="{StaticResource FieldLabel}"/>
+            <TextBox x:Name="NameInput" MaxLength="50"/>
+
+            <TextBlock Text="Email" Style="{StaticResource FieldLabel}"/>
+            <TextBox x:Name="LoginInput" MaxLength="50"/>
+
+            <TextBlock Text="Пароль" Style="{StaticResource FieldLabel}"/>
+            <PasswordBox x:Name="PasswordInput" MaxLength="50"/>
+
+            <TextBlock Text="Повторіть пароль" Style="{StaticResource FieldLabel}"/>
+            <PasswordBox x:Name="RepeatPasswordInput" MaxLength="50"/>
+
+            <TextBlock Text="Пароль: від 6 символів, великі й малі латинські літери, цифра та _ або -" Style="{StaticResource FieldLabel}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+            <TextBlock x:Name="ErrorText" Style="{StaticResource ErrorText}"/>
+
+            <Button Content="Зареєструватися" Margin="0,16,0,0" Click="RegisterButton_Click"/>
+            <Button Content="Вже є акаунт? Увійти" Style="{StaticResource LinkButton}" Margin="0,8,0,0" Click="BackButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

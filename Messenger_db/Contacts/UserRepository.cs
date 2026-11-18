@@ -1,7 +1,7 @@
 ﻿namespace Messenger_db
 {
     // Пошук користувачів і керування контактами
-    internal class UserRepository
+    public class UserRepository
     {
         private readonly Messengers_Db _db;
 

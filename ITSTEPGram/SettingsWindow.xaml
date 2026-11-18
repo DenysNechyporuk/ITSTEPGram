@@ -1,0 +1,32 @@
+﻿<Window x:Class="ITSTEPGram.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Налаштування" Height="640" Width="400"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{StaticResource WindowBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI" FontSize="14">
+    <StackPanel Margin="32,24">
+        <TextBlock Text="Налаштування" Style="{StaticResource TitleText}"/>
+
+        <Border Width="84" Height="84" CornerRadius="42" Background="{StaticResource AvatarBrush}" HorizontalAlignment="Center" Margin="0,18,0,0">
+            <TextBlock x:Name="AvatarText" Foreground="White" FontSize="32" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+        <TextBlock x:Name="LoginText" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+
+        <TextBlock Text="Ім'я" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="NameInput" MaxLength="50"/>
+
+        <TextBlock Text="Про себе" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="BioInput" MaxLength="500"/>
+
+        <TextBlock Text="Новий пароль (порожньо — не змінювати)" Style="{StaticResource FieldLabel}"/>
+        <PasswordBox x:Name="NewPasswordInput" MaxLength="50"/>
+
+        <TextBlock x:Name="MessageText" Style="{StaticResource ErrorText}"/>
+
+        <Button Content="Зберегти" Margin="0,16,0,0" Click="SaveButton_Click"/>
+        <Button Content="Вийти з акаунта" Style="{StaticResource DangerButton}" Margin="0,10,0,0" Click="LogoutButton_Click"/>
+    </StackPanel>
+</Window>
