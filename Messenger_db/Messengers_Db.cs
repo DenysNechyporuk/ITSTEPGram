@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Messenger_db
 {
-    internal class Messengers_Db : DbContext
+    public class Messengers_Db : DbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
