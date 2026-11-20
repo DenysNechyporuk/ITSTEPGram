@@ -14,7 +14,7 @@ namespace ITSTEPGram
         public string? Password { get; set; }
         public string? Name { get; set; }
 
-        public void Registration(string login, string password, string name)
+        public string Registration(string login, string password, string name)
         {
             Login = login;
             Password = password;
@@ -32,15 +32,12 @@ namespace ITSTEPGram
                 {
                     if (db.Clients.Any(l => l.Login == Login))
                     {
-                        Console.WriteLine("Login exists");
-                        return;
+                        return "Такий email вже зареєстрований";
                     }
-
-                    Console.WriteLine("Login good");
                 }
                 else
                 {
-                    Console.WriteLine($"Email {login} is bad");
+                    return $"Email {login} некоректний";
                 }
 
                 if (match.Success)
@@ -50,13 +47,12 @@ namespace ITSTEPGram
                     bool success = Regex.IsMatch(password, @".{6,}") && Regex.IsMatch(password, @"[A-Z]+") && Regex.IsMatch(password, @"[a-z]+") && Regex.IsMatch(password, @"[0-9]+") && Regex.IsMatch(password, @"[_-]+") && Regex.IsMatch(password, @"[A-Z]+") && Regex.IsMatch(password, @"^[A-Za-z0-9_-]+$");
                     if (success)
                     {
-                        Console.WriteLine("password good");
-
-                        Client client = new Client()
+                        Messenger_db.Client client = new Messenger_db.Client()
                         {
                             Login = this.Login,
                             Password = this.Password,
                             Name = this.Name,
+                            IP = "",
                         };
 
                         db.Clients.Add(client);
@@ -64,10 +60,11 @@ namespace ITSTEPGram
                     }
                     else
                     {
-                        Console.WriteLine($"password {password} is bad");
+                        return "Пароль: від 6 символів, великі й малі латинські літери, цифра та _ або -";
                     }
                 }
             }
+            return "";
         }
 
         public bool LoginMember(string login, string password)
@@ -79,7 +76,7 @@ namespace ITSTEPGram
             {
                 if(db.Clients.Any(l => l.Login == this.Login))
                 {
-                    if(db.Clients.Any(l => l.Password == this.Password))
+                    if(db.Clients.Any(l => l.Login == this.Login && l.Password == this.Password))
                     {
                         return true;
                     }

@@ -239,6 +239,8 @@ class Chat
     {
         lock (members)
         {
+            while (rooms.ContainsKey(nextChatId))
+                nextChatId++;
             ChatRoom room = new ChatRoom();
             room.Id = nextChatId;
             nextChatId++;
@@ -256,8 +258,10 @@ class Chat
         {
             if (!rooms.TryGetValue(command.ChatId, out ChatRoom? room))
             {
-                Send(member, ServerMessage($"Чату {command.ChatId} не існує"));
-                return;
+                room = new ChatRoom();
+                room.Id = command.ChatId;
+                room.Name = $"Chat {room.Id}";
+                rooms.Add(room.Id, room);
             }
             if (room.Members.Contains(member))
             {

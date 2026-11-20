@@ -1,0 +1,29 @@
+﻿<Window x:Class="ITSTEPGram.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ITSTEPGram — Вхід" Height="560" Width="420"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Background="{StaticResource WindowBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI" FontSize="14">
+    <Grid>
+        <StackPanel VerticalAlignment="Center" Margin="44,0">
+            <Border Width="84" Height="84" CornerRadius="42" Background="{StaticResource AvatarBrush}" HorizontalAlignment="Center">
+                <TextBlock Text="✈" FontSize="38" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <TextBlock Text="ITSTEPGram" Style="{StaticResource TitleText}" HorizontalAlignment="Center" Margin="0,16,0,4"/>
+            <TextBlock Text="Увійдіть у свій акаунт" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+
+            <TextBlock Text="Email" Style="{StaticResource FieldLabel}"/>
+            <TextBox x:Name="LoginInput" MaxLength="50"/>
+
+            <TextBlock Text="Пароль" Style="{StaticResource FieldLabel}"/>
+            <PasswordBox x:Name="PasswordInput" MaxLength="50" KeyDown="PasswordInput_KeyDown"/>
+
+            <TextBlock x:Name="ErrorText" Style="{StaticResource ErrorText}"/>
+
+            <Button Content="Увійти" Margin="0,16,0,0" Click="LoginButton_Click"/>
+            <Button Content="Немає акаунта? Зареєструватися" Style="{StaticResource LinkButton}" Margin="0,8,0,0" Click="RegisterButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

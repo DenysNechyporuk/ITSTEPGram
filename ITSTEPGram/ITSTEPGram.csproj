@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Messenger_db\Messenger_db.csproj" />
+    <ProjectReference Include="..\ITSTEPGram.Client\ITSTEPGram.Client.csproj" />
+    <ProjectReference Include="..\ITSTEPGram.Common\ITSTEPGram.Common.csproj" />
   </ItemGroup>
 
 </Project>
