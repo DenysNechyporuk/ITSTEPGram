@@ -38,11 +38,13 @@ namespace ITSTEPGram
     public class UserItem
     {
         public int Id { get; set; }
+        public int RequestId { get; set; }
         public string Name { get; set; } = "";
         public string Login { get; set; } = "";
         public string Letter { get; set; } = "";
         public string Status { get; set; } = "";
         public bool IsContact { get; set; }
+        public string RequestStatus { get; set; } = "";
     }
 
     public static class DataService
@@ -72,6 +74,125 @@ namespace ITSTEPGram
                 db.SaveChanges();
 
                 return client;
+            }
+        }
+        public static List<UserItem> GetIncomingRequests(string myLogin)
+        {
+            using (Messengers_Db db = new Messengers_Db())
+            {
+                User? me = db.Users.FirstOrDefault(u => u.Username == myLogin);
+
+                if (me == null)
+                    return new List<UserItem>();
+
+                return db.ContactRequests
+                    .Where(r => r.ReceiverUserId == me.Id && r.Status == "Pending")
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Select(r => new UserItem
+                    {
+                        Id = r.Sender.Id,
+                        RequestId = r.Id,
+                        Name = r.Sender.DisplayName,
+                        Login = r.Sender.Username,
+                        Letter = r.Sender.DisplayName.Substring(0, 1),
+                        Status = r.Sender.IsOnline ? "у мережі" : "не в мережі",
+                        IsContact = false,
+                        RequestStatus = "PendingIncoming"
+                    })
+                    .ToList();
+            }
+        }
+
+        public static List<int> GetIncomingRequestIds(string myLogin)
+        {
+            using (Messengers_Db db = new Messengers_Db())
+            {
+                User? me = db.Users.FirstOrDefault(u => u.Username == myLogin);
+
+                if (me == null)
+                    return new List<int>();
+
+                return db.ContactRequests
+                    .Where(r => r.ReceiverUserId == me.Id && r.Status == "Pending")
+                    .Select(r => r.Id)
+                    .ToList();
+            }
+        }
+        public static void RejectContactRequest(string myLogin, int requestId)
+        {
+            using Messengers_Db db = new Messengers_Db();
+
+            User? me = db.Users.FirstOrDefault(u => u.Username == myLogin);
+
+            if (me == null)
+                return;
+
+            ContactRequest? request = db.ContactRequests.FirstOrDefault(r =>
+                r.Id == requestId &&
+                r.ReceiverUserId == me.Id &&
+                r.Status == "Pending");
+
+            if (request == null)
+                return;
+
+            request.Status = "Rejected";
+            db.SaveChanges();
+        }
+
+        public static void AcceptContactRequest(string myLogin, int requestId)
+        {
+            using (Messengers_Db db = new Messengers_Db())
+            {
+                User? me = db.Users.FirstOrDefault(u => u.Username == myLogin);
+
+                if (me == null)
+                    return;
+
+                ContactRequest? request = db.ContactRequests.FirstOrDefault(r =>
+                    r.Id == requestId &&
+                    r.ReceiverUserId == me.Id &&
+                    r.Status == "Pending");
+
+                if (request == null)
+                    return;
+
+                bool firstExists = db.UserContacts.Any(c =>
+                    c.UserId == me.Id &&
+                    c.ContactUserId == request.SenderUserId);
+
+                if (!firstExists)
+                {
+                    db.UserContacts.Add(new UserContact
+                    {
+                        UserId = me.Id,
+                        ContactUserId = request.SenderUserId
+                    });
+                }
+
+                bool secondExists = db.UserContacts.Any(c =>
+                    c.UserId == request.SenderUserId &&
+                    c.ContactUserId == me.Id);
+
+                if (!secondExists)
+                {
+                    db.UserContacts.Add(new UserContact
+                    {
+                        UserId = request.SenderUserId,
+                        ContactUserId = me.Id
+                    });
+                }
+
+                request.Status = "Accepted";
+
+                ContactRequest? reverseRequest = db.ContactRequests.FirstOrDefault(r =>
+                    r.SenderUserId == me.Id &&
+                    r.ReceiverUserId == request.SenderUserId &&
+                    r.Status == "Pending");
+
+                if (reverseRequest != null)
+                    reverseRequest.Status = "Accepted";
+
+                db.SaveChanges();
             }
         }
 
@@ -486,16 +607,58 @@ namespace ITSTEPGram
             return result;
         }
 
-        public static void AddContact(string myLogin, int contactUserId)
+        public static string AddContact(string myLogin, int contactUserId)
         {
             using (Messengers_Db db = new Messengers_Db())
             {
                 User? me = db.Users.FirstOrDefault(u => u.Username == myLogin);
-                if (me != null && me.Id != contactUserId)
+
+                if (me == null)
+                    return "Користувача не знайдено.";
+
+                if (me.Id == contactUserId)
+                    return "Не можна додати самого себе.";
+
+                User? contact = db.Users.FirstOrDefault(u => u.Id == contactUserId);
+
+                if (contact == null)
+                    return "Такого користувача не існує.";
+
+                bool alreadyContact = db.UserContacts.Any(c =>
+                    c.UserId == me.Id && c.ContactUserId == contactUserId);
+
+                if (alreadyContact)
+                    return "Цей користувач уже є у контактах.";
+
+                ContactRequest? request = db.ContactRequests.FirstOrDefault(r => r.SenderUserId == me.Id && r.ReceiverUserId == contactUserId);
+
+                if (request != null && request.Status == "Pending")
+                    return "Заявка вже надіслана.";
+
+                bool incomingRequest = db.ContactRequests.Any(r => r.SenderUserId == contactUserId && r.ReceiverUserId == me.Id && r.Status == "Pending");
+
+                if (incomingRequest)
+                    return "Цей користувач уже надіслав вам заявку. Перевірте розділ «Заявки».";
+
+                if (request != null)
                 {
-                    UserRepository repository = new UserRepository(db);
-                    repository.AddContact(me.Id, contactUserId);
+                    request.Status = "Pending";
+                    request.CreatedAt = DateTime.Now;
                 }
+                else
+                {
+                    db.ContactRequests.Add(new ContactRequest
+                    {
+                        SenderUserId = me.Id,
+                        ReceiverUserId = contactUserId,
+                        Status = "Pending",
+                        CreatedAt = DateTime.Now
+                    });
+                }
+
+                db.SaveChanges();
+
+                return "Заявку надіслано.";
             }
         }
 

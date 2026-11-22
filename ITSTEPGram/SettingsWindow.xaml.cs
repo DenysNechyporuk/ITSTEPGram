@@ -6,6 +6,7 @@ namespace ITSTEPGram
     public partial class SettingsWindow : Window
     {
         public bool IsLogout { get; set; } = false;
+        public bool IsSwitchAccount { get; set; } = false;
 
         public SettingsWindow()
         {
@@ -28,6 +29,7 @@ namespace ITSTEPGram
                 ShowMessage("Ім'я не може бути порожнім", true);
                 return;
             }
+
             if (newPassword != "" && !DataService.IsPasswordStrong(newPassword))
             {
                 ShowMessage("Пароль: від 6 символів, великі й малі латинські літери, цифра та _ або -", true);
@@ -41,6 +43,12 @@ namespace ITSTEPGram
             ShowMessage("Збережено", false);
         }
 
+        private void SwitchAccountButton_Click(object sender, RoutedEventArgs e)
+        {
+            IsSwitchAccount = true;
+            Close();
+        }
+
         private void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
             IsLogout = true;
@@ -50,6 +58,7 @@ namespace ITSTEPGram
         private void ShowMessage(string text, bool isError)
         {
             MessageText.Text = text;
+
             if (isError)
             {
                 MessageText.Foreground = (Brush)FindResource("DangerBrush");

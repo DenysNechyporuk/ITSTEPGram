@@ -125,6 +125,37 @@ namespace Messenger_db.Migrations
                     b.ToTable("Contacts");
                 });
 
+            modelBuilder.Entity("Messenger_db.ContactRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReceiverUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SenderUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiverUserId");
+
+                    b.HasIndex("SenderUserId", "ReceiverUserId")
+                        .IsUnique();
+
+                    b.ToTable("ContactRequests");
+                });
+
             modelBuilder.Entity("Messenger_db.Message", b =>
                 {
                     b.Property<int>("Id")
@@ -267,6 +298,25 @@ namespace Messenger_db.Migrations
                     b.Navigation("Client");
                 });
 
+            modelBuilder.Entity("Messenger_db.ContactRequest", b =>
+                {
+                    b.HasOne("Messenger_db.User", "Receiver")
+                        .WithMany("ReceivedRequests")
+                        .HasForeignKey("ReceiverUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Messenger_db.User", "Sender")
+                        .WithMany("SentRequests")
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("Messenger_db.Message", b =>
                 {
                     b.HasOne("Messenger_db.Chat", "Chats")
@@ -326,6 +376,10 @@ namespace Messenger_db.Migrations
                     b.Navigation("AddedByContacts");
 
                     b.Navigation("Contacts");
+
+                    b.Navigation("ReceivedRequests");
+
+                    b.Navigation("SentRequests");
                 });
 #pragma warning restore 612, 618
         }
