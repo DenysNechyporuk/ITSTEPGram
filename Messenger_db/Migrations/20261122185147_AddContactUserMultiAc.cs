@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Messenger_db.Migrations
 {
-    /// <inheritdoc />
     public partial class AddContactUserMultiAc : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -25,37 +23,22 @@ namespace Messenger_db.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ContactRequests", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ContactRequests_Users_ReceiverUserId",
-                        column: x => x.ReceiverUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ContactRequests_Users_SenderUserId",
-                        column: x => x.SenderUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(name: "FK_ContactRequests_Users_ReceiverUserId",
+                          column: x => x.ReceiverUserId,
+                          principalTable: "Users",
+                          principalColumn: "Id",
+                          onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(name: "FK_ContactRequests_Users_SenderUserId", column: x => x.SenderUserId,   principalTable: "Users", principalColumn: "Id",onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactRequests_ReceiverUserId",
-                table: "ContactRequests",
-                column: "ReceiverUserId");
+            migrationBuilder.CreateIndex(name: "IX_ContactRequests_ReceiverUserId", table: "ContactRequests", column: "ReceiverUserId");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactRequests_SenderUserId_ReceiverUserId",
-                table: "ContactRequests",
-                columns: new[] { "SenderUserId", "ReceiverUserId" },
-                unique: true);
+            migrationBuilder.CreateIndex(name: "IX_ContactRequests_SenderUserId_ReceiverUserId", table: "ContactRequests", columns: new[] { "SenderUserId", "ReceiverUserId" }, unique: true);
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ContactRequests");
+            migrationBuilder.DropTable(name: "ContactRequests");
         }
     }
 }

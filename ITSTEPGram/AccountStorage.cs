@@ -7,10 +7,7 @@ namespace ITSTEPGram
 {
     public static class AccountStorage
     {
-        private static readonly string FolderPath =
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "ITSTEPGram");
+        private static readonly string FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ITSTEPGram");
 
         private static readonly string FilePath =
             Path.Combine(FolderPath, "accounts.txt");
@@ -48,8 +45,7 @@ namespace ITSTEPGram
 
                 List<string> accounts = Load();
 
-                accounts.RemoveAll(x =>
-                    string.Equals(x, login, StringComparison.OrdinalIgnoreCase));
+                accounts.RemoveAll(x => string.Equals(x, login, StringComparison.OrdinalIgnoreCase));
 
                 accounts.Insert(0, login);
                 File.WriteAllLines(FilePath, accounts);

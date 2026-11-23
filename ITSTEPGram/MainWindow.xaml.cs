@@ -137,9 +137,7 @@ namespace ITSTEPGram
         {
             isLoadingChats = true;
 
-            List<ChatItem> chats = DataService.GetChats(
-                Session.CurrentUser!.Id,
-                SearchBox.Text.Trim());
+            List<ChatItem> chats = DataService.GetChats(Session.CurrentUser!.Id, SearchBox.Text.Trim());
 
             ChatsList.ItemsSource = chats;
 
@@ -164,10 +162,7 @@ namespace ITSTEPGram
                 CloseChat();
             }
 
-            NoChatsText.Visibility =
-                chats.Count == 0 && SearchBox.Text.Trim() == ""
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+            NoChatsText.Visibility = chats.Count == 0 && SearchBox.Text.Trim() == "" ? Visibility.Visible : Visibility.Collapsed;
 
             isLoadingChats = false;
             JoinRooms();
@@ -234,10 +229,7 @@ namespace ITSTEPGram
             ChatTitleText.Text = selectedChat.Name;
             ChatInfoText.Text = selectedChat.Info;
 
-            MessagesList.ItemsSource = DataService.GetMessages(
-                selectedChat.Id,
-                Session.CurrentUser!.Id,
-                selectedChat.IsGroup);
+            MessagesList.ItemsSource = DataService.GetMessages(selectedChat.Id, Session.CurrentUser!.Id, selectedChat.IsGroup);
 
             MessagesScroll.UpdateLayout();
             MessagesScroll.ScrollToEnd();
@@ -298,18 +290,12 @@ namespace ITSTEPGram
 
         private void MessageInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            MessageHint.Visibility =
-                MessageInput.Text == ""
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+            MessageHint.Visibility = MessageInput.Text == "" ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            SearchHint.Visibility =
-                SearchBox.Text == ""
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+            SearchHint.Visibility = SearchBox.Text == "" ? Visibility.Visible : Visibility.Collapsed;
 
             if (IsLoaded)
             {
