@@ -3,6 +3,7 @@ using ITSTEPGram.Common;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace ITSTEPGram
 {
@@ -11,25 +12,66 @@ namespace ITSTEPGram
         private ChatItem? selectedChat;
         private bool isLoadingChats = false;
         private List<int> joinedRooms = new List<int>();
+        private DispatcherTimer requestTimer;
+        private HashSet<int> knownRequestIds = new HashSet<int>();
+        private bool isChangingAccount = false;
 
         public MainWindow()
         {
             InitializeComponent();
+
             UserNameText.Text = Session.CurrentUser!.Name;
             StatusText.Text = "підключення...";
 
             Session.Network.MessageReceived += Network_MessageReceived;
             Session.Network.Disconnected += Network_Disconnected;
 
+            knownRequestIds = DataService.GetIncomingRequestIds(Session.CurrentUser.Login).ToHashSet();
+
+            requestTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(5)
+            };
+
+            requestTimer.Tick += RequestTimer_Tick;
+            requestTimer.Start();
+
             LoadChats();
             ConnectToServer();
+        }
+
+        private void RequestTimer_Tick(object? sender, EventArgs e)
+        {
+            if (Session.CurrentUser == null)
+            {
+                return;
+            }
+
+            List<int> currentIds = DataService.GetIncomingRequestIds(Session.CurrentUser.Login);
+            List<int> newIds = currentIds.Where(id => !knownRequestIds.Contains(id)).ToList();
+
+            knownRequestIds = currentIds.ToHashSet();
+
+            if (newIds.Count > 0)
+            {
+                StatusText.Text = "Нова заявка в контакти";
+                MessageBox.Show(
+                    "Ви отримали нову заявку в контакти.",
+                    "ITSTEPGram",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
         }
 
         private async void ConnectToServer()
         {
             try
             {
-                await Session.Network.ConnectAsync(Session.ServerIp, Session.Port, Session.CurrentUser!.Login);
+                await Session.Network.ConnectAsync(
+                    Session.ServerIp,
+                    Session.Port,
+                    Session.CurrentUser!.Login);
+
                 StatusText.Text = "в мережі";
                 JoinRooms();
             }
@@ -51,6 +93,7 @@ namespace ITSTEPGram
                 if (!joinedRooms.Contains(chatId))
                 {
                     joinedRooms.Add(chatId);
+
                     try
                     {
                         await Session.Network.JoinChatAsync(chatId);
@@ -72,9 +115,11 @@ namespace ITSTEPGram
                     {
                         StatusText.Text = e.Command.Message;
                     }
+
                     LoadChats();
                     return;
                 }
+
                 LoadChats();
                 LoadMessages();
             });
@@ -93,9 +138,11 @@ namespace ITSTEPGram
             isLoadingChats = true;
 
             List<ChatItem> chats = DataService.GetChats(Session.CurrentUser!.Id, SearchBox.Text.Trim());
+
             ChatsList.ItemsSource = chats;
 
             bool isFound = false;
+
             if (selectedChat != null)
             {
                 foreach (ChatItem chat in chats)
@@ -115,14 +162,7 @@ namespace ITSTEPGram
                 CloseChat();
             }
 
-            if (chats.Count == 0 && SearchBox.Text.Trim() == "")
-            {
-                NoChatsText.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                NoChatsText.Visibility = Visibility.Collapsed;
-            }
+            NoChatsText.Visibility = chats.Count == 0 && SearchBox.Text.Trim() == "" ? Visibility.Visible : Visibility.Collapsed;
 
             isLoadingChats = false;
             JoinRooms();
@@ -136,6 +176,7 @@ namespace ITSTEPGram
             }
 
             ChatItem? chat = ChatsList.SelectedItem as ChatItem;
+
             if (chat != null)
             {
                 OpenChat(chat);
@@ -145,6 +186,7 @@ namespace ITSTEPGram
         private void OpenChat(ChatItem chat)
         {
             selectedChat = chat;
+
             ChatTitleText.Text = chat.Name;
             ChatInfoText.Text = chat.Info;
             ChatAvatarText.Text = chat.Letter;
@@ -160,7 +202,9 @@ namespace ITSTEPGram
         {
             SearchBox.Text = "";
             selectedChat = new ChatItem { Id = chatId };
+
             LoadChats();
+
             if (ChatsList.SelectedItem is ChatItem chat)
             {
                 OpenChat(chat);
@@ -184,7 +228,9 @@ namespace ITSTEPGram
 
             ChatTitleText.Text = selectedChat.Name;
             ChatInfoText.Text = selectedChat.Info;
+
             MessagesList.ItemsSource = DataService.GetMessages(selectedChat.Id, Session.CurrentUser!.Id, selectedChat.IsGroup);
+
             MessagesScroll.UpdateLayout();
             MessagesScroll.ScrollToEnd();
         }
@@ -192,14 +238,18 @@ namespace ITSTEPGram
         private async void SendMessage()
         {
             string text = MessageInput.Text.Trim();
+
             if (text == "" || selectedChat == null)
             {
                 return;
             }
 
             ChatItem chat = selectedChat;
+
             DataService.AddMessage(chat.Id, Session.CurrentUser!.Id, text);
+
             MessageInput.Text = "";
+
             LoadChats();
             LoadMessages();
 
@@ -246,6 +296,7 @@ namespace ITSTEPGram
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             SearchHint.Visibility = SearchBox.Text == "" ? Visibility.Visible : Visibility.Collapsed;
+
             if (IsLoaded)
             {
                 LoadChats();
@@ -256,6 +307,7 @@ namespace ITSTEPGram
         {
             NewChatWindow newChat = new NewChatWindow();
             newChat.Owner = this;
+
             if (newChat.ShowDialog() != true)
             {
                 return;
@@ -267,10 +319,13 @@ namespace ITSTEPGram
                 {
                     if (member.Login != Session.CurrentUser!.Login)
                     {
-                        Session.SendNotice(member.Login, "Вас додано до групи " + newChat.GroupName);
+                        Session.SendNotice(
+                            member.Login,
+                            "Вас додано до групи " + newChat.GroupName);
                     }
                 }
             }
+
             SelectChat(newChat.CreatedChatId);
         }
 
@@ -278,6 +333,7 @@ namespace ITSTEPGram
         {
             ContactsWindow contacts = new ContactsWindow();
             contacts.Owner = this;
+
             if (contacts.ShowDialog() != true)
             {
                 LoadChats();
@@ -285,12 +341,18 @@ namespace ITSTEPGram
             }
 
             string error;
-            int chatId = DataService.CreatePrivateChat(Session.CurrentUser!.Id, contacts.OpenChatLogin, out error);
+
+            int chatId = DataService.CreatePrivateChat(
+                Session.CurrentUser!.Id,
+                contacts.OpenChatLogin,
+                out error);
+
             if (chatId == 0)
             {
                 MessageBox.Show(error, "ITSTEPGram");
                 return;
             }
+
             SelectChat(chatId);
         }
 
@@ -304,21 +366,20 @@ namespace ITSTEPGram
             ChatInfoWindow info = new ChatInfoWindow(selectedChat);
             info.Owner = this;
             info.ShowDialog();
+
             LoadChats();
             LoadMessages();
         }
 
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        private async void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             SettingsWindow settings = new SettingsWindow();
             settings.Owner = this;
             settings.ShowDialog();
 
-            if (settings.IsLogout)
+            if (settings.IsLogout || settings.IsSwitchAccount)
             {
-                LoginWindow login = new LoginWindow();
-                login.Show();
-                Close();
+                await SwitchToLogin();
                 return;
             }
 
@@ -326,8 +387,48 @@ namespace ITSTEPGram
             LoadChats();
         }
 
+        private async Task SwitchToLogin()
+        {
+            isChangingAccount = true;
+
+            requestTimer.Stop();
+
+            ChatClient oldNetwork = Session.Network;
+
+            oldNetwork.MessageReceived -= Network_MessageReceived;
+            oldNetwork.Disconnected -= Network_Disconnected;
+
+            if (Session.CurrentUser != null)
+            {
+                DataService.SetOffline(Session.CurrentUser.Login);
+            }
+
+            try
+            {
+                await oldNetwork.LeaveAsync();
+            }
+            catch (Exception)
+            {
+            }
+
+            Session.CurrentUser = null;
+            Session.Network = new ChatClient();
+
+            LoginWindow login = new LoginWindow();
+            login.Show();
+
+            Close();
+        }
+
         private async void Window_Closed(object sender, EventArgs e)
         {
+            if (isChangingAccount)
+            {
+                return;
+            }
+
+            requestTimer.Stop();
+
             Session.Network.MessageReceived -= Network_MessageReceived;
             Session.Network.Disconnected -= Network_Disconnected;
 
@@ -339,6 +440,7 @@ namespace ITSTEPGram
 
             ChatClient oldNetwork = Session.Network;
             Session.Network = new ChatClient();
+
             try
             {
                 await oldNetwork.LeaveAsync();

@@ -11,6 +11,7 @@
             <Border Width="84" Height="84" CornerRadius="42" Background="{StaticResource AvatarBrush}" HorizontalAlignment="Center">
                 <TextBlock Text="✈" FontSize="38" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
+
             <TextBlock Text="ITSTEPGram" Style="{StaticResource TitleText}" HorizontalAlignment="Center" Margin="0,16,0,4"/>
             <TextBlock Text="Увійдіть у свій акаунт" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
 

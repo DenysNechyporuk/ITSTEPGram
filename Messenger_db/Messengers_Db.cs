@@ -1,10 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Messenger_db
 {
@@ -14,39 +10,39 @@ namespace Messenger_db
         {
             base.OnConfiguring(optionsBuilder);
             optionsBuilder.UseSqlServer(@"
-                                            Data Source = (localdb)\MSSQLLocalDB;
-                                            Initial Catalog = Messenger_db;
-                                            Integrated Security = True;"
-            );
+                Data Source = (localdb)\MSSQLLocalDB;
+                Initial Catalog = Messenger_db;
+                Integrated Security = True;");
         }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Client>()
                 .Property(x => x.Login)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
 
             modelBuilder.Entity<Client>()
                 .Property(a => a.Password)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
+
             modelBuilder.Entity<Client>()
                 .Property(a => a.Name)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
 
             modelBuilder.Entity<Chat>()
                 .Property(a => a.Name)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
 
             modelBuilder.Entity<Message>()
                 .Property(a => a.Text)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
-
-            // 1 .... *
 
             modelBuilder.Entity<Contact>()
                 .HasOne(x => x.Client)
@@ -75,22 +71,22 @@ namespace Messenger_db
 
             modelBuilder.Entity<User>()
                 .Property(u => u.Username)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
 
             modelBuilder.Entity<User>()
                 .Property(u => u.DisplayName)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
 
             modelBuilder.Entity<User>()
                 .Property(u => u.Email)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(100);
 
             modelBuilder.Entity<User>()
                 .Property(u => u.Password)
-                .IsRequired(true)
+                .IsRequired()
                 .HasMaxLength(50);
 
             modelBuilder.Entity<User>()
@@ -125,7 +121,23 @@ namespace Messenger_db
                 .HasIndex(c => new { c.UserId, c.ContactUserId })
                 .IsUnique();
 
+            modelBuilder.Entity<ContactRequest>()
+                .HasOne(r => r.Sender)
+                .WithMany(u => u.SentRequests)
+                .HasForeignKey(r => r.SenderUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ContactRequest>()
+                .HasOne(r => r.Receiver)
+                .WithMany(u => u.ReceivedRequests)
+                .HasForeignKey(r => r.ReceiverUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ContactRequest>()
+                .HasIndex(r => new { r.SenderUserId, r.ReceiverUserId })
+                .IsUnique();
         }
+
         public DbSet<Client> Clients { get; set; }
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Chat> Chats { get; set; }
@@ -133,7 +145,7 @@ namespace Messenger_db
         public DbSet<Message> Messages { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserContact> UserContacts { get; set; }
-
+        public DbSet<ContactRequest> ContactRequests { get; set; }
     }
 
     public class Client
@@ -144,6 +156,7 @@ namespace Messenger_db
             ChatMembers = new HashSet<ChatMember>();
             Messages = new HashSet<Message>();
         }
+
         public int Id { get; set; }
         public string Name { get; set; }
         public string Login { get; set; }
@@ -169,13 +182,13 @@ namespace Messenger_db
             ChatMembers = new HashSet<ChatMember>();
             Messages = new HashSet<Message>();
         }
+
         public int Id { get; set; }
         public string Name { get; set; }
         public bool IsGroup { get; set; }
         public DateTime CreatedTime { get; set; } = DateTime.Now;
         public ICollection<ChatMember> ChatMembers { get; set; }
         public ICollection<Message> Messages { get; set; }
-
     }
 
     public class ChatMember
